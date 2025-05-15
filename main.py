@@ -95,8 +95,16 @@ main_html = """
             position: relative;
             margin: 20px 0;
         }
+
+        /* Contenedor blanco detrás del canvas */
+        .canvas-background {
+            background-color: #ffffff;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
         canvas {
-            background-color: white;
+            background-color: transparent;
             border-radius: 10px;
             box-shadow: 0 0 15px rgba(255, 0, 128, 0.3);
         }
@@ -217,7 +225,9 @@ main_html = """
         </div>
         
         <div class="canvas-container">
-            <canvas id="myCanvas" width="300" height="300"></canvas>
+            <div class="canvas-background">
+                <canvas id="myCanvas" width="300" height="300"></canvas>
+            </div>
         </div>
         
         <div class="buttons-container">
@@ -272,12 +282,12 @@ main_html = """
         }
 
         function initCanvas() {
-            ctx = document.getElementById('myCanvas').getContext("2d");
+            // activar transparencia en el canvas
+            ctx = document.getElementById('myCanvas').getContext("2d", { alpha: true });
             
-            // Establecer fondo blanco
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-            
+            // Limpiar canvas a fondo transparente
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
             // Elegir forma aleatoria
             currentShape = getRandomShape();
             displayShape(currentShape);
@@ -350,8 +360,8 @@ main_html = """
         }
 
         function clearCanvas() {
-            ctx.fillStyle = "white";
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            // Borrar trazos dejando fondo transparente
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
 
         function submitDrawing() {
@@ -470,10 +480,9 @@ def prepare_dataset():
         
         if filelist:  # Check if there are any files
             images_read = io.concatenate_images(io.imread_collection(filelist))
-            
-            # Eliminar canal alfa si existe (convertir RGBA a RGB)
-            if images_read.shape[3] == 4:  # If has alpha channel
-                images_read = images_read[:, :, :, :3]  # Take only RGB channels
+            # extraer solo canal alfa
+            if images_read.ndim == 4:
+                images_read = images_read[:, :, :, 3]
             
             shape_labels = np.array([shape] * images_read.shape[0])
             images.append(images_read)
