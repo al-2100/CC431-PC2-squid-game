@@ -8,6 +8,23 @@ import numpy as np
 
 app = Flask(__name__)
 
+# Crear directorio de datos si no existe
+DATA_DIR = os.path.join(tempfile.gettempdir(), 'squid_game_data')
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+# Definir las carpetas de formas
+SHAPE_FOLDERS = {
+    "X": os.path.join(DATA_DIR, "X"),
+    "O": os.path.join(DATA_DIR, "O"),
+    "■": os.path.join(DATA_DIR, "cuadrado")
+}
+
+# Crear carpetas para cada forma
+for folder in SHAPE_FOLDERS.values():
+    if not os.path.exists(folder):
+        os.makedirs(folder)
+
 main_html = """
 <!DOCTYPE html>
 <html>
@@ -425,10 +442,8 @@ def upload():
         img_data = request.form.get('myImage').replace("data:image/png;base64,", "")
         shape = request.form.get('shape')
         
-        # Asegurar que la carpeta correspondiente exista
-        shape_folder = shape.replace('■', 'cuadrado')
-        if not os.path.exists(shape_folder):
-            os.makedirs(shape_folder)
+        # Usar la carpeta correspondiente del diccionario
+        shape_folder = SHAPE_FOLDERS[shape]
         
         # Guardar la imagen decodificada en un archivo temporal dentro de la carpeta
         with tempfile.NamedTemporaryFile(delete=False, mode="w+b", suffix='.png', dir=shape_folder) as fh:
@@ -447,11 +462,10 @@ def prepare_dataset():
     # Preparar las imágenes y etiquetas para el conjunto de datos
     images = []
     shapes = ["X", "O", "■"]
-    folder_names = {"X": "X", "O": "O", "■": "cuadrado"}
     labels = []
     
     for shape in shapes:
-        folder = folder_names[shape]
+        folder = SHAPE_FOLDERS[shape]
         filelist = glob.glob(f'{folder}/*.png')
         
         if filelist:  # Check if there are any files
@@ -469,27 +483,27 @@ def prepare_dataset():
         # Apilar todas las imágenes y etiquetas
         images = np.vstack(images)
         labels = np.concatenate(labels)
-        # Guardar matrices para entrenamiento
-        np.save('X.npy', images)
-        np.save('y.npy', labels)
+        
+        # Guardar matrices para entrenamiento en el directorio de datos
+        np_x_path = os.path.join(DATA_DIR, 'X.npy')
+        np_y_path = os.path.join(DATA_DIR, 'y.npy')
+        
+        np.save(np_x_path, images)
+        np.save(np_y_path, labels)
         return "¡Conjunto de datos preparado con éxito!"
     else:
         return "No se encontraron imágenes para preparar el conjunto de datos"
 
 @app.route('/X.npy', methods=['GET'])
 def download_X():
-    return send_file('./X.npy')
+    return send_file(os.path.join(DATA_DIR, 'X.npy'))
 
 @app.route('/y.npy', methods=['GET'])
 def download_y():
-    return send_file('./y.npy')
+    return send_file(os.path.join(DATA_DIR, 'y.npy'))
 
 if __name__ == "__main__":
-    # Ensure shape folders exist
-    shapes = ["X", "O", "cuadrado"]
-    for shape in shapes:
-        if not os.path.exists(shape):
-            os.makedirs(shape)
-    
     # Run the Flask app
-    app.run(debug=True, host='0.0.0.0')
+    # Use port from environment variable for Railway compatibility
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=False, host='0.0.0.0', port=port)
