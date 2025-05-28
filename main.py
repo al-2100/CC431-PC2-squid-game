@@ -17,7 +17,8 @@ if not os.path.exists(DATA_DIR):
 SHAPE_FOLDERS = {
     "X": os.path.join(DATA_DIR, "X"),
     "O": os.path.join(DATA_DIR, "O"),
-    "■": os.path.join(DATA_DIR, "cuadrado")
+    "■": os.path.join(DATA_DIR, "cuadrado"),
+    "▲": os.path.join(DATA_DIR, "triangulo")
 }
 
 # Crear carpetas para cada forma
@@ -250,14 +251,13 @@ main_html = """
         var mousePressed = false;
         var lastX, lastY;
         var ctx;
-        var currentShape;
-
-        // Formas que usaremos
-        const shapes = ["X", "O", "■"];
+        var currentShape;        // Formas que usaremos
+        const shapes = ["X", "O", "■", "▲"];
         const shapeNames = {
             "X": "una X",
             "O": "un Círculo",
-            "■": "un Cuadrado"
+            "■": "un Cuadrado",
+            "▲": "un Triángulo"
         };
 
         function getRandomShape() {
@@ -271,13 +271,14 @@ main_html = """
             // Limpiar estilo anterior
             iconEl.style = "";
             iconEl.innerHTML = "";
-            
-            if (shape === "X") {
+              if (shape === "X") {
                 iconEl.innerHTML = "X";
             } else if (shape === "O") {
                 iconEl.innerHTML = "O";
             } else if (shape === "■") {
                 iconEl.innerHTML = "■";
+            } else if (shape === "▲") {
+                iconEl.innerHTML = "▲";
             }
         }
 
@@ -471,7 +472,7 @@ def upload():
 def prepare_dataset():
     # Preparar las imágenes y etiquetas para el conjunto de datos
     images = []
-    shapes = ["X", "O", "■"]
+    shapes = ["X", "O", "■", "▲"]
     labels = []
     
     for shape in shapes:
